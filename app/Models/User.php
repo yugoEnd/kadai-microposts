@@ -11,6 +11,8 @@ use Laravel\Sanctum\HasApiTokens;
 class User extends Authenticatable
 {
     use HasApiTokens, HasFactory, Notifiable;
+    
+    public static $user_id = 0;
 
     /**
      * The attributes that are mass assignable.
@@ -53,7 +55,7 @@ class User extends Authenticatable
      */
     public function loadRelationshipCounts()
     {
-        $this->loadCount(['microposts', 'followings', 'followers']);
+        $this->loadCount(['microposts', 'followings', 'followers','favorites']);
     }
    
    
@@ -102,7 +104,6 @@ class User extends Authenticatable
     {
         $exist = $this->is_following($userId);
         $its_me = $this->id == $userId;
-        
         if ($exist && !$its_me) {
             $this->followings()->detach($userId);
             return true;
@@ -126,11 +127,49 @@ class User extends Authenticatable
      */
     public function feed_microposts()
     {
-        // このユーザがフォロー中のユーザのidを取得して配列にする
-        $userIds = $this->followings()->pluck('users.id')->toArray();
-        // このユーザのidもその配列に追加
-        $userIds[] = $this->id;
-        // それらのユーザが所有する投稿に絞り込む
-        return Micropost::whereIn('user_id', $userIds);
+    // このユーザがフォロー中のユーザのidを取得して配列にする
+    $userIds = $this->followings()->pluck('users.id')->toArray();
+    // ログインユーザのidをその配列に追加
+    $userIds[] = $this->id;
+    // それらのユーザが所有する投稿に絞り込む
+    return Micropost::whereIn('user_id', $userIds);
+    }
+     public function feed_favorite_microposts()
+    {
+    // このユーザがフォロー中のユーザのidを取得して配列にする
+    $micropostIds  = $this->favorite()->pluck('microposts.id')->toArray();
+    // ログインユーザのidをその配列に追加
+    $micropostIds[] = $this->id;
+    // それらのユーザが所有する投稿に絞り込む
+    return Micropost::whereIn('user_id', $micropostIds);
+    }
+    
+    public function favorite($micropostId)
+    {
+        $this->favorites()->attach($micropostId);
+    }
+    
+    /**
+     * 指定された $micropostId の投稿をお気に入り解除する。
+     *
+     * @param  int $micropostId
+     * @return bool
+     */
+    public function unfavorite($micropostId)
+    {
+        $this->favorites()->detach($micropostId);
+    }
+    
+
+    public function is_favorites($micropostId)
+    {
+        return $this->favorites()->where('micropost_id', $micropostId)->exists();
+    }
+
+
+    // このユーザがお気に入り中の投稿一覧。（Userモデルとの関係を定義）
+    public function favorites()
+    {        
+        return $this->belongsToMany(Micropost::class, 'user_favorites', 'user_id', 'micropost_id')->withTimestamps();
     }
 }

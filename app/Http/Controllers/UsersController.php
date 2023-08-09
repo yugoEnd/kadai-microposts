@@ -6,7 +6,7 @@ use Illuminate\Http\Request;
 
 use Illuminate\Support\Facades\Auth;                        // 追加
 use App\Models\User;                                        // 追加
-
+use App\Models\Micropost;
 class UsersController extends Controller
 {
     public function index()                                 // 追加       
@@ -66,18 +66,30 @@ class UsersController extends Controller
     {
         // idの値でユーザを検索して取得
         $user = User::findOrFail($id);
-
         // 関係するモデルの件数をロード
         $user->loadRelationshipCounts();
-
         // ユーザのフォロワー一覧を取得
         $followers = $user->followers()->paginate(10);
-
         // フォロワー一覧ビューでそれらを表示
         return view('users.followers', [
             'user' => $user,
             'users' => $followers,
         ]);
     }
-    
+    public function favorites($id)
+    {
+        // idの値でユーザを検索して取得 
+        $user = User::findOrFail($id);
+        // 関係するモデルの件数をロード
+        $user->loadRelationshipCounts();
+        // お気に入り投稿一覧を取得
+        // ユーザーの投稿一覧を作成日時の降順で取得
+        $favorites = $user->favorites()->orderBy('created_at', 'desc')->paginate(10);
+        return view('users.favorites', [
+            'user' => $user,
+            'microposts' => $favorites,
+        ]);
+    }
+
+
 }

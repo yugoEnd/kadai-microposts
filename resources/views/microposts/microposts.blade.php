@@ -9,17 +9,19 @@
                             <img src="{{ Gravatar::get($micropost->user->email) }}" alt="" />
                         </div>
                     </div>
-                    <div>
-                        <div>
-                            {{-- 投稿の所有者のユーザ詳細ページへのリンク --}}
-                            <a class="link link-hover text-info" href="{{ route('users.show', $micropost->user->id) }}">{{ $micropost->user->name }}</a>
-                            <span class="text-muted text-gray-500">posted at {{ $micropost->created_at }}</span>
-                        </div>
-                        <div>
+                    <div class="grid grid-cols-2 w-full">
+                        <div class="col-span-1">
+                            <div>
+                                {{-- 投稿の所有者のユーザ詳細ページへのリンク --}}
+                                <a class="link link-hover text-info" href="{{ route('users.show', $micropost->user->id) }}">{{ $micropost->user->name }}</a>
+                                <span class="text-muted text-gray-500">posted at {{ $micropost->created_at }}</span>
+                            </div>
                             {{-- 投稿内容 --}}
-                            <p class="mb-0">{!! nl2br(e($micropost->content)) !!}</p>
+                            <p class="mb-0 ml-4">{!! nl2br(e($micropost->content)) !!}</p>
                         </div>
-                        <div>
+                        <div class="col-span-1 flex justify-start">
+                            {{-- お気に入りフォロー／お気に入りアンフォローボタン --}}
+                            @include('user_favorite.favorite_button')
                             @if (Auth::id() == $micropost->user_id)
                                 {{-- 投稿削除ボタンのフォーム --}}
                                 <form method="POST" action="{{ route('microposts.destroy', $micropost->id) }}">
